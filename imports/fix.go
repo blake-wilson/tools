@@ -36,12 +36,31 @@ var (
 // prefix into another group after 3rd-party packages.
 var LocalPrefix string
 
+// Map of repository name to its group name
+var githubRepos = map[string]int{}
+
+var numRepos int
+
+// Maximums for `int` type
+const maxUint = ^uint(0)
+const maxInt = int(maxUint >> 1)
+
 // importToGroup is a list of functions which map from an import path to
 // a group number.
 var importToGroup = []func(importPath string) (num int, ok bool){
 	func(importPath string) (num int, ok bool) {
 		if LocalPrefix != "" && strings.HasPrefix(importPath, LocalPrefix) {
-			return 3, true
+			return maxInt, true
+		}
+		if strings.HasPrefix(importPath, `github.com/`) {
+			remainder := strings.TrimPrefix(importPath, `github.com/`)
+			repo := remainder[:strings.IndexAny(remainder, `/`)]
+			if gNo, ok := githubRepos[repo]; ok {
+				return gNo, true
+			}
+			githubRepos[repo] = numRepos + 3
+			numRepos++
+			return githubRepos[repo], true
 		}
 		return
 	},
