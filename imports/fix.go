@@ -35,8 +35,17 @@ var (
 // If set, LocalPrefix instructs Process to sort import paths with the given
 // prefix into another group after 3rd-party packages.
 var LocalPrefix string
+var SecondPartyPrefix string
 
 // Map of repository name to its group name
+// Github imports will be broken from a continuous block into the following
+// structure
+
+// github.com/third-party/repo-number1
+// github.com/third-party/repo-number2
+//
+// github.com/local-github-account/repo-number1
+// github.com/{local-prefix}/repo
 var githubRepos = map[string]int{}
 
 var numRepos int
@@ -51,6 +60,9 @@ var importToGroup = []func(importPath string) (num int, ok bool){
 	func(importPath string) (num int, ok bool) {
 		if LocalPrefix != "" && strings.HasPrefix(importPath, LocalPrefix) {
 			return maxInt, true
+		}
+		if SecondPartyPrefix != "" && strings.HasPrefix(importPath, SecondPartyPrefix) {
+			return maxInt - 1, true
 		}
 		if strings.HasPrefix(importPath, `github.com/`) {
 			remainder := strings.TrimPrefix(importPath, `github.com/`)
