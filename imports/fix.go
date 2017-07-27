@@ -40,11 +40,20 @@ var LocalPrefixes []string
 // a group number.
 var importToGroup = []func(importPath string) (num int, ok bool){
 	func(importPath string) (num int, ok bool) {
+		// Use the best matching local path
+		bestMatchLen := 0
+		bestMatchInd := len(LocalPrefixes)
 		for i := len(LocalPrefixes) - 1; i >= 0; i-- {
 			p := LocalPrefixes[i]
 			if p != "" && strings.HasPrefix(importPath, p) {
-				return i + 3, true
+				if len(p) > bestMatchLen {
+					bestMatchInd = i
+					bestMatchLen = len(p)
+				}
 			}
+		}
+		if bestMatchLen > 0 {
+			return bestMatchInd + 3, true
 		}
 		return
 	},
