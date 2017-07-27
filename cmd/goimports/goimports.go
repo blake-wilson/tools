@@ -47,7 +47,6 @@ var (
 
 func init() {
 	flag.BoolVar(&options.AllErrors, "e", false, "report all errors (not just the first 10 on different lines)")
-	flag.StringVar(&imports.LocalPrefix, "local", "", "put imports beginning with this string after 3rd-party packages")
 }
 
 func report(err error) {
@@ -201,8 +200,16 @@ func main() {
 // It's a var so that custom implementations can replace it in other files.
 var parseFlags = func() []string {
 	flag.BoolVar(&verbose, "v", false, "verbose logging")
+	var strList string
+	flag.StringVar(&strList, "local", "", "put imports beginning with these strings after 3rd-party packages")
 
 	flag.Parse()
+
+	prefixes := strings.Split(strList, `,`)
+	for i := 0; i < len(prefixes); i++ {
+		prefixes[i] = strings.TrimSpace(prefixes[i])
+	}
+	imports.LocalPrefixes = prefixes
 	return flag.Args()
 }
 
