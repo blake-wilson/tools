@@ -42,7 +42,7 @@ var importToGroup = []func(importPath string) (num int, ok bool){
 	func(importPath string) (num int, ok bool) {
 		// Use the best matching local path
 		bestMatchLen := 0
-		bestMatchInd := len(LocalPrefixes)
+		bestMatchInd := 0
 		for i := len(LocalPrefixes) - 1; i >= 0; i-- {
 			p := LocalPrefixes[i]
 			if p != "" && strings.HasPrefix(importPath, p) {
