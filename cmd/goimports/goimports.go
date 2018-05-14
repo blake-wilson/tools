@@ -201,12 +201,19 @@ func main() {
 // It's a var so that custom implementations can replace it in other files.
 var parseFlags = func() []string {
 	flag.BoolVar(&verbose, "v", false, "verbose logging")
-	var strList string
-	flag.StringVar(&strList, "local", "", "put imports beginning with these strings after 3rd-party packages")
-
+	var csvFilepath string
+	flag.StringVar(&csvFilepath, "local", "", "Name of CSV file with import priority in order of line number. Put imports beginning with these strings after 3rd-party packages")
 	flag.Parse()
+	if csvFilepath == "" {
+		imports.LocalPrefixes = make(map[string]int)
+		return flag.Args()
+	}
 
-	r := csv.NewReader(strings.NewReader(strList))
+	d, err := os.Open(csvFilepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	r := csv.NewReader(bufio.NewReader(d))
 	records, err := r.ReadAll()
 	if err != nil {
 		log.Fatal(err)
