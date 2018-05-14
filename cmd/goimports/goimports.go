@@ -7,7 +7,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/csv"
 	"errors"
 	"flag"
 	"fmt"
@@ -201,28 +200,30 @@ func main() {
 // It's a var so that custom implementations can replace it in other files.
 var parseFlags = func() []string {
 	flag.BoolVar(&verbose, "v", false, "verbose logging")
-	var csvFilepath string
-	flag.StringVar(&csvFilepath, "local", "", "Name of CSV file with import priority in order of line number. Put imports beginning with these strings after 3rd-party packages")
+	var impOrderPath string
+	flag.StringVar(&impOrderPath, "local", "", "Name of row-delimited file with import priority in order of line number. Put imports beginning with these strings after 3rd-party packages. Imports with the same priority can be entered in a comma-delimited list on the same line")
 	flag.Parse()
-	if csvFilepath == "" {
+	if impOrderPath == "" {
 		imports.LocalPrefixes = make(map[string]int)
 		return flag.Args()
 	}
+	d, err := os.Open(impOrderPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer d.Close()
+	scanner := bufio.NewScanner(d)
+	scanner.Split(bufio.ScanLines)
 
-	d, err := os.Open(csvFilepath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	r := csv.NewReader(bufio.NewReader(d))
-	records, err := r.ReadAll()
-	if err != nil {
-		log.Fatal(err)
-	}
 	prefMap := make(map[string]int)
-	for i, imps := range records {
-		for _, imp := range imps {
-			prefMap[imp] = i
+	priority := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		paths := strings.Split(line, ",")
+		for _, imp := range paths {
+			prefMap[imp] = priority
 		}
+		priority++
 	}
 	imports.LocalPrefixes = prefMap
 	return flag.Args()
