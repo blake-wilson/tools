@@ -7,6 +7,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/csv"
 	"errors"
 	"flag"
 	"fmt"
@@ -205,11 +206,18 @@ var parseFlags = func() []string {
 
 	flag.Parse()
 
-	prefixes := strings.Split(strList, `,`)
-	for i := 0; i < len(prefixes); i++ {
-		prefixes[i] = strings.TrimSpace(prefixes[i])
+	r := csv.NewReader(strings.NewReader(strList))
+	records, err := r.ReadAll()
+	if err != nil {
+		log.Fatal(err)
 	}
-	imports.LocalPrefixes = prefixes
+	prefMap := make(map[string]int)
+	for i, imps := range records {
+		for _, imp := range imps {
+			prefMap[imp] = i
+		}
+	}
+	imports.LocalPrefixes = prefMap
 	return flag.Args()
 }
 
